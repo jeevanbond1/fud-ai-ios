@@ -33,6 +33,10 @@ jobs:
           rm -rf Payload FudAI-unsigned.ipa
           mkdir -p Payload
           cp -R "$APP" Payload/
+          # Sideloading re-signs the main app with a personal-team bundle
+          # id, which invalidates the Watch app's companion id
+          # (InvalidCompanionAppBundleIdentifier). Ship no Watch app.
+          rm -rf Payload/*.app/Watch
           zip -qry FudAI-unsigned.ipa Payload
           ls -lh FudAI-unsigned.ipa
 
