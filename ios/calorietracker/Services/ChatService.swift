@@ -244,16 +244,12 @@ struct ChatService {
                     guard let image = UIImage(data: imageData) else {
                         throw ChatError.apiError("Could not read the attached photo.")
                     }
+                    // Fork build patch: Attachment needs the iOS 27 SDK;
+                    // this build uses text-only prompts on older SDKs.
+                    _ = image
                     let session = LanguageModelSession(instructions: onDeviceInstructions)
                     let response = try await session.respond {
                         prompt
-                        if let cgImage = image.cgImage {
-                            Attachment(cgImage)
-                                .label("coach-image")
-                        } else {
-                            Attachment(image)
-                                .label("coach-image")
-                        }
                     }
                     return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
                 }

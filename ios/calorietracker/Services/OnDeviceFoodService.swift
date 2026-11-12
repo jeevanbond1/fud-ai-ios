@@ -67,20 +67,11 @@ struct OnDeviceAIService {
         guard !images.isEmpty else {
             return try await respond(to: prompt, instructions: instructions)
         }
+        // Fork build patch: Attachment needs the iOS 27 SDK;
+        // this build uses text-only prompts on older SDKs.
         let session = LanguageModelSession(instructions: instructions)
         let response = try await session.respond {
             prompt
-            for (index, image) in images.enumerated() {
-                if let cgImage = image.cgImage {
-                    // The bitmap is stored as the camera captured it; the
-                    // orientation shows it upright.
-                    Attachment(cgImage, orientation: CGImagePropertyOrientation(image.imageOrientation))
-                        .label("image-\(index)")
-                } else {
-                    Attachment(image)
-                        .label("image-\(index)")
-                }
-            }
         }
         return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -292,23 +283,14 @@ struct OnDeviceFoodService {
             """
         )
 
+        // Fork build patch: Attachment needs the iOS 27 SDK;
+        // this build uses text/label-only prompts on older SDKs.
+        _ = images
         let response = try await session.respond(generating: FoodResult.self) {
             NutritionLabelText.prompt(
                 "Analyze the attached meal photo(s) and return accurate nutrition data for the entire meal shown.\(noteSection)\(scaleSection)",
                 adding: labelText
             )
-            for (index, image) in images.enumerated() {
-                if let cgImage = image.cgImage {
-                    // The bitmap is stored as the camera captured it; the
-                    // orientation shows it upright, as Vision read the
-                    // label text (#486).
-                    Attachment(cgImage, orientation: CGImagePropertyOrientation(image.imageOrientation))
-                        .label("image-\(index)")
-                } else {
-                    Attachment(image)
-                        .label("image-\(index)")
-                }
-            }
         }
 
         return buildFoodAnalysis(from: response.content)
